@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CIP Kalkulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Layout: two-column ledger (inputs left, result right); stacks on phones. Palette: cool grey ground, Metro-style blue + yellow (values taken from the official Metro logo file). */
+  :root {
+    --bg: #F3F5F7;
+    --panel: #FFFFFF;
+    --ink: #1C2530;
+    --ink-soft: #5C6779;
+    --ink-faint: #8B94A3;
+    --line: #DDE2E8;
+    --line-strong: #B7BFC9;
+    --brand-blue: #014171;
+    --brand-yellow: #FBC51D;
+    --band: #014171;
+    --accent: #014171;
+    --accent-ink: #014171;
+    --accent-soft: #E4EDF5;
+    --on-accent: #FFFFFF;
+    --warn: #A63B1E;
+    --warn-soft: #FBEAE4;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14181D; --panel: #1B2027; --ink: #E8EAED; --ink-soft: #A7B0BC; --ink-faint: #6B7480;
+      --line: #2C333C; --line-strong: #3C444F; --accent: #5B9BE6; --accent-ink: #B7D4F7;
+      --accent-soft: #14263F; --on-accent: #0B1A2E; --warn: #E2735A; --warn-soft: #3A211B;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14181D; --panel: #1B2027; --ink: #E8EAED; --ink-soft: #A7B0BC; --ink-faint: #6B7480;
+    --line: #2C333C; --line-strong: #3C444F; --accent: #5B9BE6; --accent-ink: #B7D4F7;
+    --accent-soft: #14263F; --on-accent: #0B1A2E; --warn: #E2735A; --warn-soft: #3A211B;
+    color-scheme: dark;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    line-height: 1.45; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 28px 24px 64px; }
+  .band { background: var(--band); color: #FFFFFF; border-bottom: 4px solid var(--brand-yellow); }
+  .band-inner { max-width: 960px; margin: 0 auto; padding: 28px 24px 26px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px 24px; flex-wrap: wrap; }
+  .band-main { display: flex; align-items: flex-start; gap: 18px; min-width: 0; flex: 1 1 380px; }
+  .logo-chip { display: flex; align-items: center; flex-shrink: 0; }
+  .logo-chip img { display: block; height: 48px; width: auto; border-radius: 3px; }
+  h1 { font-size: 1.5rem; font-weight: 650; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .sub { color: rgba(255,255,255,0.86); font-size: 0.95rem; max-width: 56ch; margin: 0; }
+  .tag { font-size: 0.78rem; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.45); border-radius: 4px; padding: 5px 10px; white-space: nowrap; }
+  .tag::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--brand-yellow); margin-right: 7px; }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  @media (min-width: 760px) { .grid { grid-template-columns: 1fr 1.1fr; align-items: start; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 24px; min-width: 0; }
+  .panel h2 { font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); margin: 0 0 20px; }
+  .panel h2.sec { margin: 28px 0 8px; padding-top: 24px; border-top: 1px solid var(--line); }
+  .sec-intro { font-size: 0.82rem; color: var(--ink-faint); margin: 0 0 18px; }
+  .field { margin-bottom: 22px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 10px; }
+  .field label { display: block; font-size: 0.88rem; color: var(--ink); font-weight: 500; }
+  .field .hint { font-size: 0.78rem; color: var(--ink-faint); margin-top: 5px; }
+  .field .equiv { font-size: 0.78rem; color: var(--ink-faint); margin-top: 5px; font-family: 'IBM Plex Mono', monospace; min-height: 1.1em; }
+  .num-row { display: flex; align-items: center; gap: 10px; }
+  .num-row input[type="number"] {
+    width: 124px; font-family: 'IBM Plex Mono', monospace; font-size: 0.95rem;
+    padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 4px; background: var(--bg); color: var(--ink);
+  }
+  .num-row input[type="number"]:focus, .num-row input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .num-row input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
+  .unit { color: var(--ink-faint); font-size: 0.85rem; min-width: 14px; }
+
+  .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 5px; overflow: hidden; flex-shrink: 0; }
+  .seg-btn {
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 0.78rem; font-weight: 500;
+    background: var(--panel); color: var(--ink-soft); border: none; padding: 5px 11px; cursor: pointer;
+  }
+  .seg-btn + .seg-btn { border-left: 1px solid var(--line-strong); }
+  .seg-btn.active { background: var(--accent); color: var(--on-accent); }
+  .seg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .ledger { font-variant-numeric: tabular-nums; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; gap: 12px; }
+  .row .label { color: var(--ink-soft); font-size: 0.88rem; min-width: 0; }
+  .row .value { font-family: 'IBM Plex Mono', monospace; font-size: 0.92rem; white-space: nowrap; }
+  .row.rule { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 13px; }
+  .result-block { margin-top: 6px; border-top: 2px solid var(--accent); box-shadow: inset 0 3px 0 0 var(--brand-yellow); padding-top: 19px; }
+  .result-block .row .label { color: var(--ink); font-weight: 600; font-size: 0.95rem; }
+  .result-block .row .value { font-size: 1.35rem; font-weight: 600; color: var(--accent-ink); }
+  .result-block .row.sub .label { font-weight: 500; color: var(--ink-soft); font-size: 0.85rem; }
+  .result-block .row.sub .value { font-size: 0.95rem; font-weight: 500; color: var(--ink); }
+
+  .comp-block { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line-strong); }
+  .comp-title { font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); margin: 0 0 8px; }
+
+  .bars { margin-top: 18px; }
+  .bar-row { margin-bottom: 12px; }
+  .bar-row:last-child { margin-bottom: 0; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--ink-faint); margin-bottom: 4px; }
+  .bar-track { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.25s ease; }
+  .bar-fill.old { background: var(--ink-faint); }
+
+  .warn-box {
+    display: none; margin-top: 16px; background: var(--warn-soft); border: 1px solid var(--warn);
+    color: var(--warn); border-radius: 5px; padding: 12px 14px; font-size: 0.86rem; line-height: 1.4;
+  }
+  .warn-box.show { display: block; }
+
+  .info-box {
+    background: var(--accent-soft); border: 1px solid var(--accent);
+    color: var(--accent-ink); border-radius: 5px; padding: 12px 14px; font-size: 0.86rem; line-height: 1.4;
+  }
+  .optional-tag { color: var(--ink-faint); font-weight: 400; }
+
+  footer.note { margin-top: 28px; font-size: 0.78rem; color: var(--ink-faint); border-top: 1px solid var(--line); padding-top: 16px; max-width: 70ch; }
+  footer.note p { margin: 0 0 8px; }
+</style>
+</head>
+<body>
+<header class="band">
+  <div class="band-inner">
+    <div class="band-main">
+      <div class="logo-chip"><img src="data:image/png;base64,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" alt="Metro"></div>
+      <div>
+        <h1>CIP kalkulator</h1>
+        <p class="sub">Koncept za ISA: koliko kupac mora povećati narudžbu proizvoda da odobreni popust ne smanji ukupnu mjesečnu maržu, ili koliko mora kupiti drugog proizvoda da se izgubljena marža nadoknadi.</p>
+      </div>
+    </div>
+    <span class="tag">koncept prikaz · HR</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="grid">
+
+    <section class="panel">
+      <h2>Ulazni podaci</h2>
+
+      <div class="field">
+        <label for="spend">Trenutna mjesečna potrošnja kupca na proizvod <span class="optional-tag">(opcionalno)</span></label>
+        <div class="num-row">
+          <input type="number" id="spend" placeholder="npr. 1000" min="0" step="10">
+          <span class="unit">€</span>
+        </div>
+        <p class="hint">Ako je ne znaš ili je ne želiš unijeti, kalkulator i dalje pokazuje potrebno povećanje narudžbe u %.</p>
+      </div>
+
+      <div class="field">
+        <label for="price">Cijena po komadu <span class="optional-tag">(obavezno)</span></label>
+        <div class="num-row">
+          <input type="number" id="price" value="100" min="0.01" step="1" required>
+          <span class="unit">€</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-head">
+          <label for="margin">Trenutna marža na proizvodu</label>
+          <div class="seg" role="group" aria-label="Način unosa marže">
+            <button type="button" class="seg-btn active" data-target="margin" data-mode="pct">%</button>
+            <button type="button" class="seg-btn" data-target="margin" data-mode="abs">€</button>
+          </div>
+        </div>
+        <div class="num-row">
+          <input type="range" id="marginRange" min="1" max="60" value="20" step="1">
+          <input type="number" id="margin" value="20" min="0" step="1">
+          <span class="unit" id="marginUnit">%</span>
+        </div>
+        <p class="equiv" id="marginEquiv"></p>
+      </div>
+
+      <div class="field">
+        <div class="field-head">
+          <label for="discount">Traženi popust kupcu</label>
+          <div class="seg" role="group" aria-label="Način unosa popusta">
+            <button type="button" class="seg-btn active" data-target="discount" data-mode="pct">%</button>
+            <button type="button" class="seg-btn" data-target="discount" data-mode="abs">€</button>
+          </div>
+        </div>
+        <div class="num-row">
+          <input type="range" id="discountRange" min="1" max="50" value="10" step="1">
+          <input type="number" id="discount" value="10" min="0" step="1">
+          <span class="unit" id="discountUnit">%</span>
+        </div>
+        <p class="equiv" id="discountEquiv"></p>
+      </div>
+
+      <h2 class="sec">Kompenzacija drugim proizvodom <span class="optional-tag">(opcionalno)</span></h2>
+      <p class="sec-intro">Ako popust nadoknađuješ većom kupnjom drugog ili novog proizvoda, unesi njegovu cijenu i maržu.</p>
+
+      <div class="field">
+        <label for="priceB">Cijena po komadu drugog proizvoda</label>
+        <div class="num-row">
+          <input type="number" id="priceB" placeholder="npr. 50" min="0.01" step="1">
+          <span class="unit">€</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-head">
+          <label for="marginB">Marža na drugom proizvodu</label>
+          <div class="seg" role="group" aria-label="Način unosa marže drugog proizvoda">
+            <button type="button" class="seg-btn active" data-target="marginB" data-mode="pct">%</button>
+            <button type="button" class="seg-btn" data-target="marginB" data-mode="abs">€</button>
+          </div>
+        </div>
+        <div class="num-row">
+          <input type="number" id="marginB" placeholder="npr. 25" min="0" step="1">
+          <span class="unit" id="marginBUnit">%</span>
+        </div>
+        <p class="equiv" id="marginBEquiv"></p>
+      </div>
+    </section>
+
+    <section class="panel ledger" aria-live="polite">
+      <h2>Rezultat</h2>
+
+      <p class="info-box" id="priceMsg" style="display:none;">Unesi cijenu po komadu da vidiš izračun. To je jedini obavezan podatak.</p>
+
+      <div id="ledgerBody">
+        <div class="row">
+          <span class="label">Trenutna marža po komadu</span>
+          <span class="value" id="out-margin0">–</span>
+        </div>
+        <div class="row" id="row-qty0">
+          <span class="label">Trenutna količina / mjesec</span>
+          <span class="value" id="out-qty0">–</span>
+        </div>
+        <div class="row rule" id="row-totalmargin0">
+          <span class="label">Ukupna mjesečna marža (danas)</span>
+          <span class="value" id="out-totalmargin0">–</span>
+        </div>
+
+        <div class="row rule">
+          <span class="label">Nova cijena, nakon popusta</span>
+          <span class="value" id="out-newprice">–</span>
+        </div>
+        <div class="row">
+          <span class="label">Nova marža po komadu</span>
+          <span class="value" id="out-newmargin">–</span>
+        </div>
+
+        <div class="result-block">
+          <div class="row">
+            <span class="label">Potrebno povećanje narudžbe</span>
+            <span class="value" id="out-increase">–</span>
+          </div>
+          <div class="row" id="row-reqqty">
+            <span class="label" id="lbl-reqqty">Potrebna količina / mjesec</span>
+            <span class="value" id="out-reqqty">–</span>
+          </div>
+          <div class="row sub" id="row-extra">
+            <span class="label" id="lbl-extra">Dodatna količina / mjesec</span>
+            <span class="value" id="out-extra">–</span>
+          </div>
+          <div class="row sub" id="row-newvalue">
+            <span class="label">Nova vrijednost narudžbe</span>
+            <span class="value" id="out-newvalue">–</span>
+          </div>
+          <div class="row sub" id="row-marginafter">
+            <span class="label">Mjesečna marža uz popust i tu količinu</span>
+            <span class="value" id="out-marginafter">–</span>
+          </div>
+        </div>
+
+        <p class="info-box" id="spendHint" style="display:none; margin-top:16px;">Količine su prikazane na primjeru od 100 kom koje kupac danas uzima. Postotak vrijedi bez obzira na veličinu kupca. Unesi mjesečnu potrošnju da vidiš stvarne količine i iznose u eurima.</p>
+
+        <div class="bars" id="barsBlock">
+          <div class="bar-row">
+            <div class="bar-label"><span id="bar-old-name">Danas</span><span id="bar-old-label">–</span></div>
+            <div class="bar-track"><div class="bar-fill old" id="bar-old"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span>Potrebno, uz popust</span><span id="bar-new-label">–</span></div>
+            <div class="bar-track"><div class="bar-fill" id="bar-new"></div></div>
+          </div>
+        </div>
+
+        <div class="warn-box" id="warnBox">Popust je jednak ili veći od trenutne marže: nova marža po komadu pada na nulu ili u minus. Nijedno povećanje količine ne može to nadoknaditi. Smanji popust, osiguraj bolju nabavnu cijenu ili nadoknadi maržu drugim proizvodom (odjeljak Kompenzacija drugim proizvodom).</div>
+
+        <div class="comp-block" id="compBlock" style="display:none;">
+          <h3 class="comp-title">Kompenzacija drugim proizvodom</h3>
+          <div class="row">
+            <span class="label">Marža po komadu drugog proizvoda</span>
+            <span class="value" id="out-marginB">–</span>
+          </div>
+          <div class="row">
+            <span class="label">Izgubljena marža po komadu s popustom</span>
+            <span class="value" id="out-lossUnit">–</span>
+          </div>
+          <div class="row" id="row-lossTotal">
+            <span class="label">Izgubljena marža / mjesec</span>
+            <span class="value" id="out-lossTotal">–</span>
+          </div>
+
+          <div class="result-block" id="compResult">
+            <div class="row">
+              <span class="label">Komada drugog proizvoda po komadu s popustom</span>
+              <span class="value" id="out-ratio">–</span>
+            </div>
+            <div class="row sub" id="row-qtyB">
+              <span class="label">Potrebna količina drugog proizvoda / mjesec</span>
+              <span class="value" id="out-qtyB">–</span>
+            </div>
+            <div class="row sub" id="row-valueB">
+              <span class="label">Vrijednost narudžbe drugog proizvoda</span>
+              <span class="value" id="out-valueB">–</span>
+            </div>
+          </div>
+
+          <p class="info-box" id="compSpendHint" style="display:none; margin-top:16px;">Omjer vrijedi bez obzira na veličinu kupca. Unesi mjesečnu potrošnju na proizvod s popustom da vidiš ukupnu količinu i iznos u eurima.</p>
+          <div class="warn-box" id="compWarn">Marža drugog proizvoda je nula ili negativna, pa on ne može nadoknaditi izgubljenu maržu.</div>
+        </div>
+
+        <p class="info-box" id="compPending" style="display:none; margin-top:16px;">Za izračun kompenzacije unesi i cijenu i maržu drugog proizvoda.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="note">
+    <p>Izračun pretpostavlja nepromijenjenu nabavnu cijenu proizvoda bez obzira na naručenu količinu. Ako firma kod veće narudžbe dobiva bolji rabat od dobavljača, stvarna potrebna količina bila bi nešto niža od prikazane.</p>
+    <p>Kompenzacija pretpostavlja da kupac nastavlja kupovati isti broj komada proizvoda s popustom. Ako mu istovremeno raste i taj proizvod, potrebna količina drugog proizvoda je manja.</p>
+  </footer>
+
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const spend = $('spend'), price = $('price'), priceB = $('priceB');
+  const marginInput = $('margin'), marginRange = $('marginRange'), marginUnit = $('marginUnit'), marginEquiv = $('marginEquiv');
+  const discountInput = $('discount'), discountRange = $('discountRange'), discountUnit = $('discountUnit'), discountEquiv = $('discountEquiv');
+  const marginBInput = $('marginB'), marginBUnit = $('marginBUnit'), marginBEquiv = $('marginBEquiv');
+
+  // One entry per field that can be typed as % of a price or as an absolute € amount per unit.
+  const F = {
+    margin:   { input: marginInput,   range: marginRange,   unit: marginUnit,   mode: 'pct', pctMax: 60,  base: () => parseFloat(price.value) || 0 },
+    discount: { input: discountInput, range: discountRange, unit: discountUnit, mode: 'pct', pctMax: 50,  base: () => parseFloat(price.value) || 0 },
+    marginB:  { input: marginBInput,  range: null,          unit: marginBUnit,  mode: 'pct', pctMax: 100, base: () => parseFloat(priceB.value) || 0 }
+  };
+
+  const round = (n, d) => Math.round(n * Math.pow(10, d)) / Math.pow(10, d);
+
+  function fmt(n, d) {
+    return isFinite(n) ? n.toLocaleString('hr-HR', {minimumFractionDigits: d, maximumFractionDigits: d}) : '0';
+  }
+  const eur = n => isFinite(n) ? fmt(n, 2) + ' €' : '–';
+  const komN = n => isFinite(n) ? fmt(n, 1) + ' kom' : '–';
+  const komR = n => isFinite(n) ? fmt(n, 2) + ' kom' : '–';
+  const komS = n => isFinite(n) ? (n >= 0 ? '+' : '') + fmt(n, 1) + ' kom' : '–';
+  const pctN = n => isFinite(n) ? (n >= 0 ? '+' : '') + fmt(n, 1) + ' %' : '–';
+
+  function configureField(key) {
+    const f = F[key];
+    f.unit.textContent = f.mode === 'pct' ? '%' : '€';
+    if (!f.range) return;
+    const P = f.base() || 100;
+    if (f.mode === 'pct') {
+      f.range.min = 1; f.range.max = f.pctMax; f.range.step = 1;
+    } else {
+      f.range.min = 0; f.range.max = Math.max(P, 1); f.range.step = Math.max(P / 100, 0.1);
+    }
+  }
+
+  function setMode(key, mode) {
+    const f = F[key];
+    if (mode === f.mode) return;
+    const base = f.base();
+    const raw = parseFloat(f.input.value);
+    if (isFinite(raw)) {
+      if (base > 0) {
+        const val = mode === 'abs' ? base * raw / 100 : raw / base * 100;
+        f.input.value = round(val, mode === 'abs' ? 2 : 1);
+      } else {
+        f.input.value = '';
+      }
+    }
+    f.mode = mode;
+    configureField(key);
+    if (f.range) {
+      f.range.value = Math.min(Math.max(parseFloat(f.input.value) || 0, f.range.min), f.range.max);
+    }
+    document.querySelectorAll('.seg-btn[data-target="' + key + '"]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    calc();
+  }
+
+  document.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => setMode(btn.dataset.target, btn.dataset.mode));
+  });
+
+  function syncPair(numberEl, rangeEl) {
+    numberEl.addEventListener('input', () => { rangeEl.value = numberEl.value; calc(); });
+    rangeEl.addEventListener('input', () => { numberEl.value = rangeEl.value; calc(); });
+  }
+  syncPair(marginInput, marginRange);
+  syncPair(discountInput, discountRange);
+
+  spend.addEventListener('input', calc);
+  price.addEventListener('input', () => { configureField('margin'); configureField('discount'); calc(); });
+  priceB.addEventListener('input', () => { configureField('marginB'); calc(); });
+  marginBInput.addEventListener('input', calc);
+
+  // Compensation: the customer keeps buying the same quantity of the discounted product,
+  // so the margin lost each month is (current quantity x discount per unit).
+  function calcComp(P0, discountPerUnit, hasSpend, V0) {
+    const compBlock = $('compBlock'), compPending = $('compPending');
+    const pB = parseFloat(priceB.value), mB = parseFloat(marginBInput.value);
+    const hasPriceB = isFinite(pB) && pB > 0;
+    const hasMarginB = isFinite(mB) && mB >= 0;
+
+    marginBEquiv.textContent = '';
+    if (hasPriceB && hasMarginB) {
+      marginBEquiv.textContent = F.marginB.mode === 'pct'
+        ? '≈ ' + eur(pB * mB / 100) + ' po komadu'
+        : '≈ ' + fmt(mB / pB * 100, 1) + ' % marže';
+    }
+
+    if (!hasPriceB && !hasMarginB) {
+      compBlock.style.display = 'none';
+      compPending.style.display = 'none';
+      return;
+    }
+    if (!(hasPriceB && hasMarginB)) {
+      compBlock.style.display = 'none';
+      compPending.style.display = 'block';
+      return;
+    }
+    compPending.style.display = 'none';
+    compBlock.style.display = '';
+
+    const marginPerUnitB = F.marginB.mode === 'pct' ? pB * mB / 100 : mB;
+    $('out-marginB').textContent = eur(marginPerUnitB);
+    $('out-lossUnit').textContent = eur(discountPerUnit);
+
+    const rowLossTotal = $('row-lossTotal'), resultBlock = $('compResult');
+    const rowQtyB = $('row-qtyB'), rowValueB = $('row-valueB');
+    const hint = $('compSpendHint'), warn = $('compWarn');
+    const lossTotal = hasSpend ? (V0 / P0) * discountPerUnit : 0;
+
+    if (marginPerUnitB <= 0) {
+      warn.classList.add('show');
+      resultBlock.style.display = 'none';
+      hint.style.display = 'none';
+      rowLossTotal.style.display = hasSpend ? '' : 'none';
+      if (hasSpend) $('out-lossTotal').textContent = eur(lossTotal);
+      return;
+    }
+    warn.classList.remove('show');
+    resultBlock.style.display = '';
+    $('out-ratio').textContent = komR(discountPerUnit / marginPerUnitB);
+
+    if (hasSpend) {
+      const qtyB = lossTotal / marginPerUnitB;
+      rowLossTotal.style.display = '';
+      rowQtyB.style.display = '';
+      rowValueB.style.display = '';
+      hint.style.display = 'none';
+      $('out-lossTotal').textContent = eur(lossTotal);
+      $('out-qtyB').textContent = komN(qtyB);
+      $('out-valueB').textContent = eur(qtyB * pB);
+    } else {
+      rowLossTotal.style.display = 'none';
+      rowQtyB.style.display = 'none';
+      rowValueB.style.display = 'none';
+      hint.style.display = 'block';
+    }
+  }
+
+  function calc() {
+    const P0 = parseFloat(price.value) || 0;
+    const priceMsg = $('priceMsg'), ledgerBody = $('ledgerBody');
+
+    if (P0 <= 0) {
+      priceMsg.style.display = 'block';
+      ledgerBody.style.display = 'none';
+      return;
+    }
+    priceMsg.style.display = 'none';
+    ledgerBody.style.display = '';
+
+    const spendRaw = parseFloat(spend.value);
+    const hasSpend = isFinite(spendRaw) && spendRaw > 0;
+    const V0 = hasSpend ? spendRaw : 0;
+
+    const marginVal = parseFloat(marginInput.value) || 0;
+    const marginPerUnit0 = F.margin.mode === 'pct' ? P0 * marginVal / 100 : marginVal;
+
+    const discountVal = parseFloat(discountInput.value) || 0;
+    const discountPerUnit = F.discount.mode === 'pct' ? P0 * discountVal / 100 : discountVal;
+
+    const newPrice = P0 - discountPerUnit;
+    const newMarginPerUnit = marginPerUnit0 - discountPerUnit;
+
+    marginEquiv.textContent = F.margin.mode === 'pct'
+      ? '≈ ' + eur(marginPerUnit0) + ' po komadu'
+      : '≈ ' + fmt(P0 > 0 ? marginPerUnit0 / P0 * 100 : 0, 1) + ' % marže';
+    discountEquiv.textContent = F.discount.mode === 'pct'
+      ? '≈ ' + eur(discountPerUnit) + ' po komadu'
+      : '≈ ' + fmt(P0 > 0 ? discountPerUnit / P0 * 100 : 0, 1) + ' % popusta';
+
+    $('out-margin0').textContent = eur(marginPerUnit0);
+    $('out-newprice').textContent = eur(newPrice);
+    $('out-newmargin').textContent = eur(newMarginPerUnit);
+
+    // Runs before the early return below: a discount that wipes out the margin
+    // is exactly when compensating with another product matters most.
+    calcComp(P0, discountPerUnit, hasSpend, V0);
+
+    const warnBox = $('warnBox');
+    const rowQty0 = $('row-qty0'), rowTotalMargin0 = $('row-totalmargin0');
+    const rowReqQty = $('row-reqqty'), rowExtra = $('row-extra');
+    const rowNewValue = $('row-newvalue'), rowMarginAfter = $('row-marginafter');
+    const barsBlock = $('barsBlock'), spendHint = $('spendHint');
+
+    if (newMarginPerUnit <= 0) {
+      warnBox.classList.add('show');
+      $('out-increase').textContent = '—';
+      rowReqQty.style.display = 'none';
+      rowExtra.style.display = 'none';
+      rowNewValue.style.display = 'none';
+      rowMarginAfter.style.display = 'none';
+      barsBlock.style.display = 'none';
+      spendHint.style.display = 'none';
+      if (hasSpend) {
+        const Q0 = V0 / P0;
+        rowQty0.style.display = '';
+        rowTotalMargin0.style.display = '';
+        $('out-qty0').textContent = komN(Q0);
+        $('out-totalmargin0').textContent = eur(Q0 * marginPerUnit0);
+      } else {
+        rowQty0.style.display = 'none';
+        rowTotalMargin0.style.display = 'none';
+      }
+      return;
+    }
+    warnBox.classList.remove('show');
+
+    const increasePct = (marginPerUnit0 / newMarginPerUnit - 1) * 100;
+    $('out-increase').textContent = pctN(increasePct);
+
+    // Base quantity: the real monthly quantity when spend is known, otherwise an example of 100 units.
+    // Either way the required quantity keeps today's total margin: base x margin now = required x margin after.
+    const Q0 = hasSpend ? V0 / P0 : 100;
+    const reqQty = Q0 * marginPerUnit0 / newMarginPerUnit;
+
+    rowReqQty.style.display = '';
+    rowExtra.style.display = '';
+    barsBlock.style.display = '';
+    $('lbl-reqqty').textContent = hasSpend ? 'Potrebna količina / mjesec' : 'Potrebna količina na svakih 100 kom danas';
+    $('lbl-extra').textContent = hasSpend ? 'Dodatna količina / mjesec' : 'Dodatno na svakih 100 kom danas';
+    $('out-reqqty').textContent = komN(reqQty);
+    $('out-extra').textContent = komS(reqQty - Q0);
+
+    $('bar-old-name').textContent = hasSpend ? 'Danas' : 'Danas (primjer: 100 kom)';
+    $('bar-old-label').textContent = komN(Q0);
+    $('bar-new-label').textContent = komN(reqQty);
+    const maxQ = Math.max(Q0, reqQty);
+    $('bar-old').style.width = (Q0 / maxQ * 100) + '%';
+    $('bar-new').style.width = (reqQty / maxQ * 100) + '%';
+
+    if (hasSpend) {
+      rowQty0.style.display = '';
+      rowTotalMargin0.style.display = '';
+      rowNewValue.style.display = '';
+      rowMarginAfter.style.display = '';
+      spendHint.style.display = 'none';
+
+      $('out-qty0').textContent = komN(Q0);
+      $('out-totalmargin0').textContent = eur(Q0 * marginPerUnit0);
+      $('out-newvalue').textContent = eur(reqQty * newPrice);
+      $('out-marginafter').textContent = eur(reqQty * newMarginPerUnit);
+    } else {
+      rowQty0.style.display = 'none';
+      rowTotalMargin0.style.display = 'none';
+      rowNewValue.style.display = 'none';
+      rowMarginAfter.style.display = 'none';
+      spendHint.style.display = 'block';
+    }
+  }
+
+  calc();
+</script>
+</body>
+</html>
