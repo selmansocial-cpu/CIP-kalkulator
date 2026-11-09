@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CIP Kalkulator</title>
+<title>CIP FSD Kalkulator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -160,6 +160,25 @@
   .sys-v .badge { font-size: 0.78rem; font-weight: 500; background: var(--accent-soft); color: var(--accent-ink); border-radius: 3px; padding: 1px 6px; margin-left: 6px; white-space: nowrap; }
   .sys-s { display: block; font-size: 0.78rem; color: var(--ink-faint); margin-top: 2px; }
   .cip-sub { margin-top: 14px; }
+  .prod { border: 1px solid var(--line-strong); border-radius: 6px; padding: 14px 16px; margin-bottom: 14px; }
+  .prod-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .prod-title { font-size: 0.82rem; font-weight: 600; color: var(--ink-soft); margin: 0; }
+  .prod .field { margin-bottom: 16px; }
+  .prod .field:last-child { margin-bottom: 0; }
+  .prod input[type="text"] {
+    width: 100%; max-width: 260px; font-family: 'IBM Plex Sans', sans-serif; font-size: 0.95rem;
+    padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 4px; background: var(--bg); color: var(--ink);
+  }
+  .prod input[type="text"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .btn-link { font-family: inherit; font-size: 0.78rem; background: none; border: 1px solid var(--line-strong); color: var(--ink-soft); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  .btn-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn-add { font-family: inherit; font-size: 0.88rem; font-weight: 500; background: var(--panel); color: var(--accent-ink); border: 1px dashed var(--accent); border-radius: 5px; padding: 9px 14px; cursor: pointer; width: 100%; }
+  .btn-add:disabled { color: var(--ink-faint); border-color: var(--line-strong); cursor: not-allowed; }
+  .btn-add:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .prod-count { font-size: 0.78rem; color: var(--ink-faint); margin: 6px 0 0; }
+  table.simple td.num, table.simple th.num { text-align: right; }
+  table.simple td.num { white-space: nowrap; }
+  .comp-head { font-size: 0.95rem; margin: 0 0 10px; }
 </style>
 </head>
 <body>
@@ -168,7 +187,7 @@
     <div class="band-main">
       <div class="logo-chip"><img src="data:image/png;base64,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" alt="Metro"></div>
       <div>
-        <h1>CIP kalkulator</h1>
+        <h1>CIP FSD kalkulator</h1>
         <p class="sub">Koliko više mora kupovati kupac da CIP cijena ne smanji našu maržu i što mu reći.</p>
       </div>
     </div>
@@ -212,7 +231,7 @@
       <div class="field">
         <label for="price">Redovna cijena (po komadu) <span class="optional-tag">(obavezno)</span></label>
         <div class="num-row">
-          <input type="number" id="price" value="100" min="0.01" step="1" required>
+          <input type="number" id="price" placeholder="npr. 100" min="0.01" step="1" required>
           <span class="unit">€</span>
         </div>
       </div>
@@ -226,8 +245,8 @@
           </div>
         </div>
         <div class="num-row">
-          <input type="range" id="marginRange" min="1" max="60" value="20" step="1">
-          <input type="number" id="margin" value="20" min="0" step="1">
+          <input type="range" id="marginRange" min="1" max="60" value="1" step="1">
+          <input type="number" id="margin" placeholder="npr. 20" min="0" step="1">
           <span class="unit" id="marginUnit">%</span>
         </div>
         <p class="equiv" id="marginEquiv"></p>
@@ -253,8 +272,8 @@
             </div>
           </div>
           <div class="num-row">
-            <input type="range" id="discountRange" min="1" max="50" value="10" step="1">
-            <input type="number" id="discount" value="10" min="0" step="1">
+            <input type="range" id="discountRange" min="1" max="50" value="1" step="1">
+            <input type="number" id="discount" placeholder="npr. 10" min="0" step="1">
             <span class="unit" id="discountUnit">%</span>
           </div>
         </div>
@@ -279,37 +298,59 @@
         <p class="equiv" id="cipEquiv"></p>
       </div>
 
-      <h2 class="sec">Kompenzacija drugim proizvodom <span class="optional-tag">(nije obavezno)</span></h2>
-      <p class="sec-intro">Ako popust nadoknađuješ većom kupnjom drugog ili novog proizvoda, unesi njegovu cijenu i maržu.</p>
+      <h2 class="sec">Cross Sale s drugim proizvodom <span class="optional-tag">(nije obavezno)</span></h2>
+      <p class="sec-intro">Ako popust nadoknađuješ većom kupnjom drugog ili novog proizvoda, unesi njegovu cijenu i maržu. Cijena i marža moraju biti za istu jedinicu (komad, kg ili l). Možeš dodati do 10 proizvoda; svaki od njih zasebno nadoknađuje izgubljenu maržu, pa kupcu nudiš jedan od njih.</p>
 
-      <div class="field">
-        <label for="priceB">Redovna cijena drugog proizvoda (po komadu)</label>
-        <div class="num-row">
-          <input type="number" id="priceB" placeholder="npr. 50" min="0.01" step="1">
-          <span class="unit">€</span>
-        </div>
-      </div>
+      <div id="prodList"></div>
+      <button type="button" class="btn-add" id="addProd">+ Dodaj još jedan proizvod</button>
+      <p class="prod-count" id="prodCount"></p>
 
-      <div class="field">
-        <div class="field-head">
-          <label for="marginB">Marža po cjeniku drugog proizvoda</label>
-          <div class="seg" role="group" aria-label="Način unosa marže drugog proizvoda">
-            <button type="button" class="seg-btn active" data-target="marginB" data-mode="pct">%</button>
-            <button type="button" class="seg-btn" data-target="marginB" data-mode="abs">€</button>
+      <template id="prodTpl">
+        <div class="prod">
+          <div class="prod-head">
+            <h3 class="prod-title"></h3>
+            <button type="button" class="btn-link prod-remove">Ukloni</button>
+          </div>
+          <div class="field">
+            <label class="lbl-name">Naziv proizvoda (nije obavezno)</label>
+            <input type="text" class="in-name" maxlength="40" placeholder="npr. Coca-Cola 1 l" autocomplete="off">
+          </div>
+          <div class="field">
+            <div class="field-head">
+              <label class="lbl-price">Redovna cijena proizvoda</label>
+              <div class="seg" role="group" aria-label="Jedinica proizvoda">
+                <button type="button" class="seg-btn active" data-pu="kom">kom</button>
+                <button type="button" class="seg-btn" data-pu="kg">kg</button>
+                <button type="button" class="seg-btn" data-pu="l">l</button>
+              </div>
+            </div>
+            <div class="num-row">
+              <input type="number" class="in-price" placeholder="npr. 50" min="0.01" step="1">
+              <span class="unit pu-label"></span>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-head">
+              <label class="lbl-margin">Marža po cjeniku proizvoda</label>
+              <div class="seg" role="group" aria-label="Način unosa marže proizvoda">
+                <button type="button" class="seg-btn active" data-pm="pct">%</button>
+                <button type="button" class="seg-btn" data-pm="abs">€</button>
+              </div>
+            </div>
+            <div class="num-row">
+              <input type="number" class="in-margin" placeholder="npr. 25" min="0" step="1">
+              <span class="unit pm-unit">%</span>
+            </div>
+            <p class="equiv pm-equiv"></p>
           </div>
         </div>
-        <div class="num-row">
-          <input type="number" id="marginB" placeholder="npr. 25" min="0" step="1">
-          <span class="unit" id="marginBUnit">%</span>
-        </div>
-        <p class="equiv" id="marginBEquiv"></p>
-      </div>
+      </template>
     </section>
 
     <section class="panel ledger" aria-live="polite">
       <h2>Rezultat</h2>
 
-      <p class="info-box" id="priceMsg" style="display:none;">Upiši cijenu jednog komada da vidiš rezultat. To je jedini obavezan podatak.</p>
+      <p class="info-box" id="priceMsg" style="display:none;">Upiši redovnu cijenu, maržu po cjeniku i popust (ili CIP cijenu) da vidiš rezultat. Mjesečna kupnja nije obavezna.</p>
 
       <div id="ledgerBody">
 
@@ -320,7 +361,6 @@
             <div class="sys-cell"><span class="sys-l">CIP cijena</span><span class="sys-v"><span id="out-cip">–</span><span class="badge" id="out-cipbadge" style="display:none;"></span></span></div>
             <div class="sys-cell"><span class="sys-l">Marža po cjeniku</span><span class="sys-v" id="out-mpc">–</span><span class="sys-s" id="out-mpcsub"></span></div>
             <div class="sys-cell"><span class="sys-l">CIP marža</span><span class="sys-v" id="out-cipm">–</span><span class="sys-s" id="out-cipmsub"></span></div>
-            <div class="sys-cell wide"><span class="sys-l">Najniža CIP cijena</span><span class="sys-v" id="out-floor">–</span><span class="sys-s" id="out-floorsub"></span></div>
           </div>
         </div>
 
@@ -331,7 +371,7 @@
 
         <p class="info-box" id="weightHint" style="display:none; margin-bottom:18px;">Upiši težinu ili volumen jednog komada da mogu preračunati u komade.</p>
 
-        <div class="warn-box" id="warnBox" style="margin-top:0; margin-bottom:18px;">Ova CIP cijena je na ili ispod Najniže CIP cijene: Metro na komadu ne zarađuje ništa ili gubi, pa je nikakva veća kupnja ne može nadoknaditi. Podigni CIP cijenu ili upiši drugi proizvod u odjeljku Kompenzacija.</div>
+        <div class="warn-box" id="warnBox" style="margin-top:0; margin-bottom:18px;">Uz ovu CIP cijenu CIP marža je nula ili negativna: Metro na komadu ne zarađuje ništa ili gubi, pa je nikakva veća kupnja istog proizvoda ne može nadoknaditi. Podigni CIP cijenu ili upiši drugi proizvod u odjeljku Cross Sale.</div>
 
         <div class="say-box" id="sayBox">
           <h3>Što reći kupcu</h3>
@@ -344,11 +384,14 @@
         </div>
 
         <div class="say-box" id="compBlock" style="display:none;">
-          <h3>Ako kupac uzima drugi proizvod</h3>
-          <p class="comp-plain" id="compPlain"></p>
-          <div class="warn-box" id="compWarn" style="margin-top:0;">Marža drugog proizvoda je nula ili manja, pa on ne može nadoknaditi izgubljenu maržu.</div>
+          <h3>Cross Sale: ako kupac uzima drugi proizvod</h3>
+          <p class="comp-head" id="compHead"></p>
+          <table class="simple">
+            <thead><tr id="compThead"></tr></thead>
+            <tbody id="compBody"></tbody>
+          </table>
         </div>
-        <p class="info-box" id="compPending" style="display:none; margin-bottom:18px;">Za izračun drugog proizvoda upiši i cijenu i maržu.</p>
+        <p class="info-box" id="compPending" style="display:none; margin-bottom:18px;"></p>
 
         <div class="tbl-block" id="tableBlock">
           <h3>Što ako dam manji popust?</h3>
@@ -383,11 +426,7 @@
           </div>
 
           <div class="comp-block" id="compDetails" style="display:none;">
-            <h3 class="comp-title">Drugi proizvod: izračun</h3>
-            <div class="row">
-              <span class="label">Marža drugog proizvoda po komadu</span>
-              <span class="value" id="out-marginB">–</span>
-            </div>
+            <h3 class="comp-title">Cross Sale: izračun po proizvodima</h3>
             <div class="row">
               <span class="label">Marža koju gubimo po komadu s popustom</span>
               <span class="value" id="out-lossUnit">–</span>
@@ -396,18 +435,10 @@
               <span class="label">Izgubljena marža mjesečno</span>
               <span class="value" id="out-lossTotal">–</span>
             </div>
-            <div class="row" id="row-ratio">
-              <span class="label">Komada drugog proizvoda po komadu s popustom</span>
-              <span class="value" id="out-ratio">–</span>
-            </div>
-            <div class="row" id="row-qtyB">
-              <span class="label">Potrebna količina drugog proizvoda mjesečno</span>
-              <span class="value" id="out-qtyB">–</span>
-            </div>
-            <div class="row" id="row-valueB">
-              <span class="label">Vrijednost narudžbe drugog proizvoda</span>
-              <span class="value" id="out-valueB">–</span>
-            </div>
+            <table class="simple" style="margin-top:8px;">
+              <thead><tr><th>Proizvod</th><th class="num">Marža po komadu</th><th class="num">Količina po komadu s popustom</th></tr></thead>
+              <tbody id="detBody"></tbody>
+            </table>
           </div>
         </details>
       </div>
@@ -417,18 +448,17 @@
 
   <footer class="note">
     <p>Računamo da nabavna cijena ostaje ista bez obzira na količinu. Ako dobavljač daje bolji rabat za veću količinu, kupac može kupovati i nešto manje.</p>
-    <p>Kod drugog proizvoda računamo da kupac nastavlja kupovati istu količinu proizvoda s popustom.</p>
+    <p>Kod Cross Salea računamo da kupac nastavlja kupovati istu količinu proizvoda s popustom.</p>
   </footer>
 
 </div>
 
 <script>
   const $ = id => document.getElementById(id);
-  const spend = $('spend'), weight = $('weight'), price = $('price'), priceB = $('priceB');
+  const spend = $('spend'), weight = $('weight'), price = $('price');
   const marginInput = $('margin'), marginRange = $('marginRange'), marginUnit = $('marginUnit'), marginEquiv = $('marginEquiv');
   const discountInput = $('discount'), discountRange = $('discountRange'), discountUnit = $('discountUnit');
   const markupInput = $('markup'), fixedInput = $('fixedPrice');
-  const marginBInput = $('marginB'), marginBUnit = $('marginBUnit'), marginBEquiv = $('marginBEquiv');
 
   const LOC = 'hr-HR';
   const KOM = 'kom';
@@ -443,8 +473,7 @@
   // One entry per field that can be typed as % of a price or as an absolute € amount per unit.
   const F = {
     margin:   { input: marginInput,   range: marginRange,   unit: marginUnit,   mode: 'pct', pctMax: 60,  base: () => parseFloat(price.value) || 0 },
-    discount: { input: discountInput, range: discountRange, unit: discountUnit, mode: 'pct', pctMax: 50,  base: () => parseFloat(price.value) || 0 },
-    marginB:  { input: marginBInput,  range: null,          unit: marginBUnit,  mode: 'pct', pctMax: 100, base: () => parseFloat(priceB.value) || 0 }
+    discount: { input: discountInput, range: discountRange, unit: discountUnit, mode: 'pct', pctMax: 50,  base: () => parseFloat(price.value) || 0 }
   };
 
   const round = (n, d) => Math.round(n * Math.pow(10, d)) / Math.pow(10, d);
@@ -570,7 +599,7 @@
   fixedInput.addEventListener('input', calc);
 
   function syncPair(numberEl, rangeEl) {
-    numberEl.addEventListener('input', () => { rangeEl.value = numberEl.value; calc(); });
+    numberEl.addEventListener('input', () => { rangeEl.value = numberEl.value === '' ? rangeEl.min : numberEl.value; calc(); });
     rangeEl.addEventListener('input', () => { numberEl.value = rangeEl.value; calc(); });
   }
   syncPair(marginInput, marginRange);
@@ -579,8 +608,6 @@
   spend.addEventListener('input', calc);
   weight.addEventListener('input', calc);
   price.addEventListener('input', () => { configureField('margin'); configureField('discount'); calc(); });
-  priceB.addEventListener('input', () => { configureField('marginB'); calc(); });
-  marginBInput.addEventListener('input', calc);
 
   $('copyBtn').addEventListener('click', () => {
     const btn = $('copyBtn');
@@ -600,70 +627,181 @@
     } catch (e) { fallback(); }
   });
 
-  // Compensation with another product: the customer keeps buying the same quantity of the
-  // discounted product, so the margin lost each month is (current quantity x discount per unit).
-  // Returns the plain sentences, or null when there is nothing to show.
+  // ---- Cross Sale: up to MAXP other products. Each one on its own makes up the lost margin,
+  // so the rep offers the customer one of them (not all together). ----
+  const MAXP = 10;
+  const prods = [];
+  let prodSeq = 0;
+  const prodList = $('prodList'), prodTpl = $('prodTpl');
+
+  function renumberProds() {
+    prods.forEach((p, i) => {
+      p.title.textContent = fill('Proizvod {i}', { i: i + 1 });
+      p.remove.style.display = prods.length > 1 ? '' : 'none';
+    });
+    $('addProd').disabled = prods.length >= MAXP;
+    $('prodCount').textContent = fill('{n} od {max} proizvoda', { n: prods.length, max: MAXP });
+  }
+
+  function prodSetMode(p, mode) {
+    if (mode === p.mode) return;
+    const base = parseFloat(p.price.value) || 0;
+    const raw = parseFloat(p.margin.value);
+    if (isFinite(raw)) {
+      if (base > 0) {
+        const val = mode === 'abs' ? base * raw / 100 : raw / base * 100;
+        p.margin.value = round(val, mode === 'abs' ? 2 : 1);
+      } else {
+        p.margin.value = '';
+      }
+    }
+    p.mode = mode;
+    p.unit.textContent = mode === 'pct' ? '%' : '€';
+    p.el.querySelectorAll('[data-pm]').forEach(btn => btn.classList.toggle('active', btn.dataset.pm === mode));
+    calc();
+  }
+
+  function prodSetUnit(p, u) {
+    if (u === p.u) return;
+    p.u = u;
+    p.puLabel.textContent = '€ / ' + UNIT_LABEL[u];
+    p.el.querySelectorAll('[data-pu]').forEach(btn => btn.classList.toggle('active', btn.dataset.pu === u));
+    calc();
+  }
+  const unitSuffix = u => u === 'kom' ? ' po komadu' : ' / ' + UNIT_LABEL[u];
+
+  function addProd(byUser) {
+    if (prods.length >= MAXP) return;
+    const el = prodTpl.content.firstElementChild.cloneNode(true);
+    const uid = ++prodSeq;
+    const p = {
+      el: el, mode: 'pct', u: 'kom',
+      name: el.querySelector('.in-name'), price: el.querySelector('.in-price'), margin: el.querySelector('.in-margin'),
+      unit: el.querySelector('.pm-unit'), puLabel: el.querySelector('.pu-label'), equiv: el.querySelector('.pm-equiv'),
+      title: el.querySelector('.prod-title'), remove: el.querySelector('.prod-remove')
+    };
+    [['.lbl-name', p.name, 'pn'], ['.lbl-price', p.price, 'pp'], ['.lbl-margin', p.margin, 'pm']].forEach(x => {
+      x[1].id = x[2] + uid;
+      el.querySelector(x[0]).htmlFor = x[2] + uid;
+    });
+    p.name.addEventListener('input', calc);
+    p.price.addEventListener('input', calc);
+    p.margin.addEventListener('input', calc);
+    p.puLabel.textContent = '€ / ' + UNIT_LABEL.kom;
+    el.querySelectorAll('[data-pm]').forEach(btn => btn.addEventListener('click', () => prodSetMode(p, btn.dataset.pm)));
+    el.querySelectorAll('[data-pu]').forEach(btn => btn.addEventListener('click', () => prodSetUnit(p, btn.dataset.pu)));
+    p.remove.addEventListener('click', () => {
+      const i = prods.indexOf(p);
+      if (i < 0) return;
+      prods.splice(i, 1);
+      el.remove();
+      renumberProds();
+      const next = prods[Math.min(i, prods.length - 1)];
+      if (next) next.price.focus();
+      calc();
+    });
+    prods.push(p);
+    prodList.appendChild(el);
+    renumberProds();
+    if (byUser) { p.name.focus(); calc(); }
+  }
+  $('addProd').addEventListener('click', () => addProd(true));
+
+  const cell = (tag, text, cls, span) => {
+    const c = document.createElement(tag);
+    c.textContent = text;
+    if (cls) c.className = cls;
+    if (span) c.colSpan = span;
+    return c;
+  };
+
+  // The margin lost each month is (current quantity x discount per unit) while the customer keeps
+  // buying the same quantity of the discounted product. For every other product: quantity = loss / its margin.
+  // Returns the plain sentence for the customer, or null when there is nothing to show.
   function calcComp(discountPerUnit, Q0) {
     const compBlock = $('compBlock'), compDetails = $('compDetails'), compPending = $('compPending');
-    const pB = parseFloat(priceB.value), mB = parseFloat(marginBInput.value);
-    const hasPriceB = isFinite(pB) && pB > 0;
-    const hasMarginB = isFinite(mB) && mB >= 0;
     const hasSpend = Q0 !== null;
 
-    marginBEquiv.textContent = '';
-    if (hasPriceB && hasMarginB) {
-      marginBEquiv.textContent = F.marginB.mode === 'pct'
-        ? '≈ ' + eur(pB * mB / 100) + ' po komadu'
-        : '≈ ' + fmt(mB / pB * 100, 1) + ' % marže';
-    }
+    const rows = [], partial = [];
+    prods.forEach((p, i) => {
+      const pB = parseFloat(p.price.value), mB = parseFloat(p.margin.value);
+      const hasP = isFinite(pB) && pB > 0, hasM = isFinite(mB) && mB >= 0;
+      const name = p.name.value.trim();
+      p.equiv.textContent = '';
+      if (hasP && hasM) {
+        const mu = p.mode === 'pct' ? pB * mB / 100 : mB;
+        p.equiv.textContent = p.mode === 'pct' ? '≈ ' + eur(mu) + unitSuffix(p.u) : '≈ ' + fmt(mB / pB * 100, 1) + ' % marže';
+        rows.push({ i: i, name: name, pB: pB, mu: mu, u: p.u });
+      } else if (hasP || hasM) {
+        partial.push(name || String(i + 1));
+      }
+    });
 
     compBlock.style.display = 'none';
     compDetails.style.display = 'none';
     compPending.style.display = 'none';
-    if (!hasPriceB && !hasMarginB) return null;
-    if (!(hasPriceB && hasMarginB)) { compPending.style.display = 'block'; return null; }
-    if (!(discountPerUnit > 0)) return null;
+    if (partial.length) {
+      compPending.textContent = fill('Za izračun proizvoda {x} upiši i cijenu i maržu.', { x: partial.join(', ') });
+      compPending.style.display = 'block';
+    }
+    if (!rows.length || !(discountPerUnit > 0)) return null;
 
     compBlock.style.display = '';
     compDetails.style.display = '';
-    const marginPerUnitB = F.marginB.mode === 'pct' ? pB * mB / 100 : mB;
-    $('out-marginB').textContent = eur(marginPerUnitB);
     $('out-lossUnit').textContent = eur(discountPerUnit);
     const lossTotal = hasSpend ? Q0 * discountPerUnit : 0;
     $('row-lossTotal').style.display = hasSpend ? '' : 'none';
     if (hasSpend) $('out-lossTotal').textContent = eur(lossTotal);
 
-    const warn = $('compWarn');
-    if (marginPerUnitB <= 0) {
-      warn.classList.add('show');
-      $('compPlain').style.display = 'none';
-      $('row-ratio').style.display = 'none';
-      $('row-qtyB').style.display = 'none';
-      $('row-valueB').style.display = 'none';
-      return null;
-    }
-    warn.classList.remove('show');
-    $('compPlain').style.display = '';
-    const ratio = discountPerUnit / marginPerUnitB;
-    $('row-ratio').style.display = '';
-    $('out-ratio').textContent = fmt(ratio, 2) + ' ' + KOM;
+    const lab = r => r.name || fill('Proizvod {i}', { i: r.i + 1 });
+    const ofTxt = r => (rows.length === 1 && !r.name) ? 'našeg drugog proizvoda' : fill('proizvoda {x}', { x: r.name || String(r.i + 1) });
+    const good = rows.filter(r => r.mu > 0);
+    const n = 10;
 
-    if (hasSpend) {
-      const qtyB = lossTotal / marginPerUnitB;
-      const qtyBc = ceilQ(qtyB);
-      $('row-qtyB').style.display = '';
-      $('row-valueB').style.display = '';
-      $('out-qtyB').textContent = fmt(qtyB, 1) + ' ' + KOM;
-      $('out-valueB').textContent = eur(qtyB * pB);
-      const q = qtyBc + ' ' + KOM;
-      $('compPlain').textContent = fill('Kupac mora mjesečno uzeti još najmanje {q} drugog proizvoda (vrijednost oko {v}).', { q: q, v: eur(qtyBc * pB) });
-      return { say: fill('Druga mogućnost: to vam mogu odobriti i ako uz sadašnju količinu mjesečno uzmete još najmanje {q} našeg drugog proizvoda.', { q: q }) };
-    }
-    $('row-qtyB').style.display = 'none';
-    $('row-valueB').style.display = 'none';
-    const n = 10, mm = ceilQ(ratio * n);
-    $('compPlain').textContent = fill('Na svakih {n} komada proizvoda s popustom kupac mora uzeti još najmanje {m} komada drugog proizvoda.', { n: n, m: mm });
-    return { say: fill('Druga mogućnost: to vam mogu odobriti i ako na svakih {n} komada proizvoda s popustom uzmete još najmanje {m} komada našeg drugog proizvoda.', { n: n, m: mm }) };
+    // Main table
+    const thead = $('compThead'), body = $('compBody');
+    thead.textContent = '';
+    body.textContent = '';
+    thead.append(cell('th', 'Proizvod'));
+    if (hasSpend) { thead.append(cell('th', 'Količina mjesečno', 'num'), cell('th', 'Vrijednost', 'num')); }
+    else { thead.append(cell('th', fill('Količina na svakih {n} kom s popustom', { n: n }), 'num')); }
+    const items = [];
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.append(cell('td', lab(r)));
+      if (!(r.mu > 0)) {
+        tr.append(cell('td', 'ne može nadoknaditi (marža je nula ili manja)', 'no', hasSpend ? 2 : 1));
+      } else if (hasSpend) {
+        const qc = ceilQ(lossTotal / r.mu);
+        const q = qc + ' ' + UNIT_LABEL[r.u];
+        tr.append(cell('td', q, 'num'), cell('td', eur(qc * r.pB), 'num'));
+        items.push(q + ' ' + ofTxt(r));
+      } else {
+        const m = ceilQ(discountPerUnit / r.mu * n);
+        const q = m + ' ' + UNIT_LABEL[r.u];
+        tr.append(cell('td', q, 'num'));
+        items.push(q + ' ' + ofTxt(r));
+      }
+      body.appendChild(tr);
+    });
+
+    // Details table (for the rep)
+    const det = $('detBody');
+    det.textContent = '';
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.append(cell('td', lab(r)), cell('td', eur(r.mu), 'num'),
+        cell('td', r.mu > 0 ? fmt(discountPerUnit / r.mu, 2) + ' ' + UNIT_LABEL[r.u] : '–', 'num'));
+      det.appendChild(tr);
+    });
+
+    const head = $('compHead');
+    if (!good.length) { head.style.display = 'none'; return null; }
+    head.style.display = '';
+    const any = good.length > 1 ? ' (dovoljan je jedan od proizvoda)' : '';
+    head.textContent = hasSpend ? fill('Uz sadašnju količinu kupac mora mjesečno uzeti još najmanje{any}:', { any: any }) : fill('Na svakih {n} komada proizvoda s popustom kupac mora uzeti još najmanje{any}:', { n: n, any: any });
+    const list = items.join(' ili ');
+    return { say: hasSpend ? fill('Druga mogućnost: to vam mogu odobriti i ako uz sadašnju količinu mjesečno uzmete još najmanje {q}.', { q: list }) : fill('Druga mogućnost: to vam mogu odobriti i ako na svakih {n} komada proizvoda s popustom uzmete još najmanje {q}.', { n: n, q: list }) };
   }
 
   // Table: how many times more the customer must buy for a few smaller discounts.
@@ -714,7 +852,9 @@
     const P0 = parseFloat(price.value) || 0;
     const priceMsg = $('priceMsg'), ledgerBody = $('ledgerBody');
 
-    if (P0 <= 0) {
+    const cipEntered = CM === 'discount' ? discountInput.value.trim() !== ''
+      : CM === 'markup' ? markupInput.value.trim() !== '' : fixedInput.value.trim() !== '';
+    if (P0 <= 0 || marginInput.value.trim() === '' || !cipEntered) {
       priceMsg.style.display = 'block';
       ledgerBody.style.display = 'none';
       return;
@@ -733,7 +873,7 @@
       : '≈ ' + fmt(m0 / P0 * 100, 1) + ' % marže';
     $('cipEquiv').textContent = fill('CIP cijena {p}, popust {x}', { p: eurP(cipPrice), x: fmtMax(d / P0 * 100, 1) + ' %' });
 
-    // Same figures as the CIP screen: regular price, CIP price, margin per price list, CIP margin, lowest CIP price.
+    // Same figures as the CIP screen: regular price, CIP price, margin per price list, CIP margin.
     $('out-redovna').textContent = eurP(P0);
     $('out-cip').textContent = eurP(cipPrice);
     $('out-cipbadge').style.display = d > 0 ? '' : 'none';
@@ -742,8 +882,6 @@
     $('out-mpcsub').textContent = eur(m0) + ' po komadu';
     $('out-cipm').textContent = cipPrice > 0 ? fmtPct(newM / cipPrice * 100) + ' %' : '–';
     $('out-cipmsub').textContent = eur(newM) + ' po komadu';
-    $('out-floor').textContent = cost > 0 ? eurP(cost) : '–';
-    $('out-floorsub').textContent = cost > 0 ? fill('najveći popust {x}', { x: fmtMax(Math.max(0, (P0 - cost) / P0 * 100), 1) + ' %' }) : '';
 
     // Current monthly quantity in pieces, from whichever unit the rep typed.
     const sRaw = parseFloat(spend.value);
@@ -825,6 +963,7 @@
     currentSay = [sayMain, compInfo ? compInfo.say : ''].filter(Boolean).join(' ');
   }
 
+  addProd(false);
   calc();
 </script>
 </body>
