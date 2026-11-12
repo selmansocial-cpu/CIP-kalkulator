@@ -179,6 +179,46 @@
   table.simple td.num, table.simple th.num { text-align: right; }
   table.simple td.num { white-space: nowrap; }
   .comp-head { font-size: 0.95rem; margin: 0 0 10px; }
+  .export { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-strong); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .export .say-note { flex: 1 1 220px; }
+  .print-only { display: none; }
+  @media print {
+    :root, :root:not([data-theme="light"]), :root[data-theme="dark"] {
+      --bg: #FFFFFF; --panel: #FFFFFF; --ink: #1C2530; --ink-soft: #5C6779; --ink-faint: #8B94A3;
+      --line: #DDE2E8; --line-strong: #B7BFC9; --accent: #014171; --accent-ink: #014171;
+      --accent-soft: #E4EDF5; --on-accent: #FFFFFF; --warn: #A63B1E; --warn-soft: #FBEAE4;
+      color-scheme: light;
+    }
+    body { background: #FFFFFF; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print, .btn, .btn-add, .btn-link, .prod-count, .tag, .hint, .sec-intro, .say-note, .prod.is-empty,
+    input[type="range"], footer.note { display: none !important; }
+    .print-only { display: block; }
+    .print-head { font-size: 0.82rem; color: var(--warn); border: 1px solid var(--warn); border-radius: 4px; padding: 6px 10px; margin: 0 0 14px; }
+    .wrap { max-width: none; padding: 14px 0 0; }
+    .band-inner { max-width: none; padding: 16px 18px; }
+    html { font-size: 12.5px; }
+    .num-row input[type="number"] { padding: 5px 8px; width: 110px; }
+    .answer { padding: 12px 14px; }
+    .say-box { padding: 12px 14px; }
+    .sys-cell { padding: 8px 12px; }
+    .grid { display: block; }
+    .panel:not(.ledger) { column-count: 2; column-gap: 28px; }
+    .panel:not(.ledger) > h2:first-child { column-span: all; }
+    .panel:not(.ledger) .field, .panel:not(.ledger) .prod { break-inside: avoid; }
+    .row { padding: 5px 0; }
+    .comp-block { margin-top: 12px; padding-top: 10px; }
+    .panel { padding: 14px 16px; margin-bottom: 12px; }
+    .panel h2 { margin-bottom: 10px; }
+    .panel h2.sec { margin: 12px 0 8px; padding-top: 12px; }
+    .field { margin-bottom: 8px; }
+    .field-head { justify-content: flex-start; gap: 14px; }
+    .field .equiv { min-height: 0; margin-top: 2px; }
+    #cipEquiv:empty { display: none; }
+    .prod { padding: 10px 12px; margin-bottom: 8px; }
+    .prod .field { margin-bottom: 6px; }
+    .answer, .say-box, .sys-block, .tbl-block { margin-bottom: 12px; }
+    .answer, .say-box, .sys-block, .tbl-block, .prod, tr { break-inside: avoid; }
+  }
 </style>
 </head>
 <body>
@@ -197,6 +237,7 @@
 
 <div class="wrap">
 
+  <p class="print-only print-head"><strong>INTERNO – sadrži maržu, ne slati kupcu</strong> · <span id="printDate"></span></p>
   <div class="grid">
 
     <section class="panel">
@@ -204,7 +245,7 @@
 
       <div class="field">
         <div class="field-head">
-          <label for="spend">Koliko kupac danas kupuje mjesečno <span class="optional-tag">(nije obavezno)</span></label>
+          <label for="spend">Koliko kupac mjesečno kupuje proizvod za koji se predlaže CIP cijena <span class="optional-tag">(neobavezno polje)</span></label>
           <div class="seg" role="group" aria-label="Jedinica u kojoj upisuješ mjesečnu kupnju">
             <button type="button" class="seg-btn unit-btn active" data-unit="eur">€</button>
             <button type="button" class="seg-btn unit-btn" data-unit="kom">kom</button>
@@ -250,7 +291,7 @@
           <span class="unit" id="marginUnit">%</span>
         </div>
         <p class="equiv" id="marginEquiv"></p>
-        <p class="hint">Isto što piše u sustavu: marža je postotak od cijene (markup 100 % znači maržu 50 %).</p>
+        <p class="hint">Prepiši iz CIP ekrana (polje Marža po cjeniku).</p>
       </div>
 
       <div class="field">
@@ -267,14 +308,14 @@
           <div class="field-head">
             <label for="discount">Popust</label>
             <div class="seg" role="group" aria-label="Način unosa popusta">
-              <button type="button" class="seg-btn active" data-target="discount" data-mode="pct">%</button>
-              <button type="button" class="seg-btn" data-target="discount" data-mode="abs">€</button>
+              <button type="button" class="seg-btn active" data-target="discount" data-mode="abs">€</button>
+              <button type="button" class="seg-btn" data-target="discount" data-mode="pct">%</button>
             </div>
           </div>
           <div class="num-row">
             <input type="range" id="discountRange" min="1" max="50" value="1" step="1">
             <input type="number" id="discount" placeholder="npr. 10" min="0" step="1">
-            <span class="unit" id="discountUnit">%</span>
+            <span class="unit" id="discountUnit">€</span>
           </div>
         </div>
 
@@ -441,6 +482,11 @@
             </table>
           </div>
         </details>
+
+        <div class="export no-print">
+          <button type="button" class="btn" id="pdfBtn">Spremi kao PDF</button>
+          <p class="say-note">Otvara se ispis: kao pisač odaberi „Spremi kao PDF“. PDF sadrži maržu, pa je samo za internu upotrebu. Ne šalji ga kupcu.</p>
+        </div>
       </div>
     </section>
 
@@ -473,19 +519,21 @@
   // One entry per field that can be typed as % of a price or as an absolute € amount per unit.
   const F = {
     margin:   { input: marginInput,   range: marginRange,   unit: marginUnit,   mode: 'pct', pctMax: 60,  base: () => parseFloat(price.value) || 0 },
-    discount: { input: discountInput, range: discountRange, unit: discountUnit, mode: 'pct', pctMax: 50,  base: () => parseFloat(price.value) || 0 }
+    discount: { input: discountInput, range: discountRange, unit: discountUnit, mode: 'abs', pctMax: 50,  base: () => parseFloat(price.value) || 0 }
   };
 
   const round = (n, d) => Math.round(n * Math.pow(10, d)) / Math.pow(10, d);
   const fmt = (n, d) => isFinite(n) ? n.toLocaleString(LOC, {minimumFractionDigits: d, maximumFractionDigits: d}) : '0';
   const fmtMax = (n, d) => isFinite(n) ? n.toLocaleString(LOC, {minimumFractionDigits: 0, maximumFractionDigits: d}) : '0';
   const eur = n => isFinite(n) ? fmt(n, 2) + ' €' : '–';
+  const eurS = n => { if (!isFinite(n)) return '–'; const dd = Math.abs(n - Math.round(n)) < 0.005 ? 0 : 2; return fmt(n, dd) + ' €'; };
   const fmtP = n => n.toLocaleString(LOC, {minimumFractionDigits: 2, maximumFractionDigits: 4});
   const eurP = n => isFinite(n) ? fmtP(n) + ' €' : '–';
   const fmtPct = n => Math.abs(n) < 1 ? fmt(n, 2) : fmtMax(n, 1);
   const pctN = n => isFinite(n) ? (n >= 0 ? '+' : '') + fmt(n, 1) + ' %' : '–';
   const fill = (tpl, map) => tpl.replace(/\{(\w+)\}/g, (m, k) => (k in map) ? map[k] : m);
   const ceilQ = n => Math.ceil(n - 1e-9);
+  const ceilE = n => Math.ceil(n - 1e-6);   // whole euro, rounded up so the margin is never short
   const multTxt = m => fmtMax(m, m < 1.05 ? 2 : 1);
   const isMeasure = () => U === 'kg' || U === 'l';
 
@@ -841,7 +889,7 @@
         } else {
           c2.textContent = fill('{m} puta više', { m: multTxt(mult) });
           tr.append(c1, c2);
-          if (hasSpend) { c3.textContent = qtyText(ceilQ(Q0 * mult)); tr.append(c3); }
+          if (hasSpend) { c3.textContent = U === 'eur' ? eurS(ceilE(Q0 * mult * (P0 - dp))) : qtyText(ceilQ(Q0 * mult)); tr.append(c3); }
         }
       }
       body.appendChild(tr);
@@ -936,8 +984,16 @@
       const priceMode = CM !== 'discount';
       const base = hasSpend ? Q0 : 10;
       const req = ceilQ(base * mult);
-      $('answerMain').textContent = fill('Popust od {d} se isplati samo ako kupac počne kupovati {m} puta više nego danas.', { d: dTxt, m: multTxt(mult) });
-      if (hasSpend) {
+      const eurMode = hasSpend && U === 'eur';
+      $('answerMain').textContent = fill(eurMode ? 'Popust od {d} se isplati samo ako kupac počne kupovati {m} puta veću količinu nego danas.' : 'Popust od {d} se isplati samo ako kupac počne kupovati {m} puta više nego danas.', { d: dTxt, m: multTxt(mult) });
+      if (eurMode) {
+        // Consumption typed in euro: answer in euro too, exact (not rounded to whole pieces) so the amount
+        // always grows with the discount. Today at the regular price, afterwards at the CIP price.
+        const reqVal = ceilE(Q0 * mult * cipPrice);
+        $('answerSub').textContent = fill('Danas kupuje za {a} mjesečno. Treba kupovati za najmanje {b} mjesečno (po CIP cijeni), a to je {c} više.', { a: eurS(sRaw), b: eurS(reqVal), c: eurS(reqVal - sRaw) });
+        sayMain = fill(priceMode ? 'Mogu vam ponuditi cijenu od {p} po komadu umjesto redovne cijene {r} ako ćete mjesečno kupovati za najmanje {b} umjesto sadašnjih {a}.' : 'Mogu vam odobriti popust od {d} na ovaj proizvod ako ćete mjesečno kupovati za najmanje {b} umjesto sadašnjih {a}.',
+          { d: dTxt, p: eurP(cipPrice), r: eurP(P0), a: eurS(sRaw), b: eurS(reqVal) });
+      } else if (hasSpend) {
         $('answerSub').textContent = fill('Danas kupuje {a} mjesečno. Treba kupovati najmanje {b} mjesečno, a to je {c} više.', { a: qtyText(Q0), b: qtyText(req), c: qtyText(req - Q0) });
         sayMain = fill(priceMode ? 'Mogu vam ponuditi cijenu od {p} po komadu umjesto redovne cijene {r} ako ćete mjesečno uzimati najmanje {b} umjesto sadašnjih {a}.' : 'Mogu vam odobriti popust od {d} na ovaj proizvod ako ćete mjesečno uzimati najmanje {b} umjesto sadašnjih {a}.',
           { d: dTxt, p: eurP(cipPrice), r: eurP(P0), a: qtyText(Q0), b: qtyText(req) });
@@ -950,8 +1006,9 @@
       rowInc.style.display = '';
       rowNV.style.display = rowMA.style.display = hasSpend ? '' : 'none';
       if (hasSpend) {
-        $('out-newvalue').textContent = eur(req * cipPrice);
-        $('out-marginafter').textContent = eur(req * newM);
+        const qAfter = eurMode ? Q0 * mult : req;
+        $('out-newvalue').textContent = eur(qAfter * cipPrice);
+        $('out-marginafter').textContent = eur(qAfter * newM);
       }
     }
 
@@ -963,7 +1020,23 @@
     currentSay = [sayMain, compInfo ? compInfo.say : ''].filter(Boolean).join(' ');
   }
 
+  // Export: the browser print dialog saves the page as PDF. Details are opened and empty product cards hidden for the printout.
+  let detailsWasOpen = false;
+  window.addEventListener('beforeprint', () => {
+    detailsWasOpen = $('details').open;
+    $('details').open = true;
+    $('printDate').textContent = fill('Datum izračuna: {d}', { d: new Date().toLocaleDateString(LOC) });
+    prods.forEach(p => p.el.classList.toggle('is-empty', p.name.value.trim() === '' && p.price.value === '' && p.margin.value === ''));
+  });
+  window.addEventListener('afterprint', () => {
+    $('details').open = detailsWasOpen;
+    prods.forEach(p => p.el.classList.remove('is-empty'));
+  });
+  $('pdfBtn').addEventListener('click', () => window.print());
+
   addProd(false);
+  configureField('discount');
+  discountRange.value = discountRange.min;
   calc();
 </script>
 </body>
